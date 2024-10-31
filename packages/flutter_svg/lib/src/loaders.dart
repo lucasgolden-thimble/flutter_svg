@@ -151,23 +151,37 @@ abstract class SvgLoader<T> extends BytesLoader {
   Future<ByteData> _load(BuildContext? context) {
     final SvgTheme theme = getTheme(context);
     return prepareMessage(context).then((T? message) {
-      return compute((T? message) {
-        return vg
-            .encodeSvg(
-              xml: provideSvg(message),
-              theme: theme.toVgTheme(),
-              colorMapper: colorMapper == null
-                  ? null
-                  : _DelegateVgColorMapper(colorMapper!),
-              debugName: 'Svg loader',
-              enableClippingOptimizer: false,
-              enableMaskingOptimizer: false,
-              enableOverdrawOptimizer: false,
-            )
-            .buffer
-            .asByteData();
-      }, message, debugLabel: 'Load Bytes');
+      return _compute<T>(
+        message: message,
+        xml: provideSvg(message),
+        theme: theme,
+        colorMapper: colorMapper,
+      );
     });
+  }
+
+  static Future<ByteData> _compute<T>({
+    required T? message,
+    required String xml,
+    required SvgTheme theme,
+    required ColorMapper? colorMapper,
+  }) {
+    return compute((T? message) {
+      return vg
+          .encodeSvg(
+        xml: xml,
+        theme: theme.toVgTheme(),
+        colorMapper: colorMapper == null
+            ? null
+            : _DelegateVgColorMapper(colorMapper),
+        debugName: 'Svg loader',
+        enableClippingOptimizer: false,
+        enableMaskingOptimizer: false,
+        enableOverdrawOptimizer: false,
+      )
+          .buffer
+          .asByteData();
+    }, message, debugLabel: 'Load Bytes');
   }
 
   /// This method intentionally avoids using `await` to avoid unnecessary event
